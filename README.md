@@ -8,7 +8,7 @@ This is a template of SVS recipe for Muskits.
   * [Table of Contents](#table-of-contents)
   * [Recipe flow](#recipe-flow)
     * [1\. Data preparation](#1-data-preparation)
-    * [2\. Wav dump / Embedding preparation](#2-wav-dump--embedding-preparation)
+    * [2\. Wav dump / Feature extract & Embedding preparation](#2-wav-dump--feature-extract--embedding-preparation)
     * [3\. Removal of long / short data](#3-removal-of-long--short-data)
     * [4\. Token list generation](#4-token-list-generation)
     * [5\. SVS statistics collection](#5-svs-statistics-collection)
@@ -30,29 +30,11 @@ This is a template of SVS recipe for Muskits.
     * [Single speaker model](#single-speaker-model)
     * [Multi speaker model](#multi-speaker-model)
   * [FAQ](#faq)
-    * [ESPnet1 model is compatible with ESPnet2?](#espnet1-model-is-compatible-with-espnet2)
-    * [How to change minibatch size in training?](#how-to-change-minibatch-size-in-training)
-    * [How to make a new recipe for my own dataset?](#how-to-make-a-new-recipe-for-my-own-dataset)
-    * [How to add a new g2p module?](#how-to-add-a-new-g2p-module)
-    * [How to add a new cleaner module?](#how-to-add-a-new-cleaner-module)
-    * [How to use trained model in python?](#how-to-use-trained-model-in-python)
-    * [How to get pretrained models?](#how-to-get-pretrained-models)
-    * [How to load the pretrained parameters?](#how-to-load-the-pretrained-parameters)
-    * [How to finetune the pretrained model?](#how-to-finetune-the-pretrained-model)
-    * [How to add a new model?](#how-to-add-a-new-model)
-    * [How to test my model with an arbitrary given text?](#how-to-test-my-model-with-an-arbitrary-given-text)
-    * [How to train vocoder?](#how-to-train-vocoder)
-    * [How to train vocoder with text2mel GTA outputs?](#how-to-train-vocoder-with-text2mel-gta-outputs)
-    * [How to handle the errors in validate_data_dir.sh?](#how-to-handle-the-errors-in-validate_data_dirsh)
-    * [Why the model generate meaningless speech at the end?](#why-the-model-generate-meaningless-speech-at-the-end)
-    * [Why the model cannot be trained well with my own dataset?](#why-the-model-cannot-be-trained-well-with-my-own-dataset)
-    * [Why the outputs contains metallic noise when combining neural vocoder?](#why-the-outputs-contains-metallic-noise-when-combining-neural-vocoder)
-    * [How is the duration for FastSpeech2 generated?](#how-is-the-duration-for-fastspeech2-generated)
-    * [Why the output of Tacotron2 or Transformer is non-deterministic?](#why-the-output-of-tacotron2-or-transformer-is-non-deterministic)
+    * [About Kaldi-style data directory](#about-kaldi-style-data-directory)
 
 ## Recipe flow
 
-TTS recipe consists of 9 stages.
+SVS recipe consists of 9 stages.
 
 ### 1. Data preparation
 
@@ -60,19 +42,12 @@ Data preparation stage.
 It calls `local/data.sh` to creates Kaldi-style data directories in `data/` for training, validation, and evaluation sets.
 
 See also:
-- [About Kaldi-style data directory](https://github.com/espnet/espnet/tree/master/egs2/TEMPLATE#about-kaldi-style-data-directory)
+- [About Kaldi-style data directory](#about-kaldi-style-data-directory)
 
-### 2. Wav dump / Embedding preparation
+### 2. Wav dump / Feature extract & Embedding preparation
 
-Wav dumping stage.
-This stage reformats `wav.scp` in data directories.
-
-Additionally, We support X-vector extraction in this stage as you can use in ESPnet1.
-If you specify `--use_xvector true` (Default: `use_xvector=false`), we extract X-vectors.
-You can select the type of toolkit to use (kaldi, speechbrain, or espnet) when you specify `--xvector_tool <option>` 
-(Default: `xvector_tool=kaldi`).
-If you specify kaldi, then we additionally extract mfcc features and vad decision.
-This processing requires the compiled kaldi, please be careful.
+If you specify `--feats_type raw`, this is a wav dumping stage which reformats `wav.scp` in data directories.
+Else, if you specify `--feats_type fbank` or `--feats_type stft`, this is a feature extracting stage (to be updated).
 
 Also, speaker ID embedding and language ID embedding preparation will be performed in this stage if you specify `--use_sid true` and `--use_lid true` options.
 Note that this processing assume that `utt2spk` or `utt2lang` are correctly created in stage 1, please be careful.
@@ -722,3 +697,109 @@ X-Vector is provided by kaldi and pretrained with VoxCeleb corpus.
 You can find example configs of the above models in:
 - [`egs2/vctk/tts1/conf/tuning`](../../vctk/tts1/conf/tuning).
 - [`egs2/libritts/tts1/conf/tuning`](../../vctk/libritts/conf/tuning).
+
+## FAQ
+
+### About Kaldi-style data directory
+
+Each directory of training set, development set, and evaluation set, has same directory structure. See also http://kaldi-asr.org/doc/data_prep.html about Kaldi data structure. 
+We recommend you running `mini_an4` recipe and checking the contents of `data/` by yourself.
+
+```bash
+cd egs2/mini_an4/asr1
+./run.sh
+```
+
+- Directory structure
+    ```
+    data/
+      train/
+        - text     # The transcription
+        - wav.scp  # Wave file path
+        - utt2spk  # A file mapping utterance-id to speaker-id
+        - spk2utt  # A file mapping speaker-id to utterance-id
+        - segments # [Option] Specifying start and end time of each utterance
+      dev/
+        ...
+      test/
+        ...
+    ```
+
+- `text` format
+    ```
+    uttidA <transcription>
+    uttidB <transcription>
+    ...
+    ```
+
+- `wav.scp` format
+    ```
+    uttidA /path/to/uttidA.wav
+    uttidB /path/to/uttidB.wav
+    ...
+    ```
+
+- `utt2spk` format
+    ```
+    uttidA speakerA
+    uttidB speakerB
+    uttidC speakerA
+    uttidD speakerB
+    ...
+    ```
+
+- `spk2utt` format
+    ```
+    speakerA uttidA uttidC ...
+    speakerB uttidB uttidD ...
+    ...
+    ```
+ 
+    Note that `spk2utt` file can be generated by `utt2spk`, and `utt2spk` can be generated by `spk2utt`, so it's enough to create either one of them.
+
+    ```bash
+    utils/utt2spk_to_spk2utt.pl data/train/utt2spk > data/train/spk2utt
+    utils/spk2utt_to_utt2spk.pl data/train/spk2utt > data/train/utt2spk
+    ```
+    
+    If your corpus doesn't include speaker information, give the same speaker id as the utterance id to satisfy the directory format, otherwise give the same speaker id for all utterances (Actually we don't use speaker information for asr recipe now).
+    
+    ```bash
+    uttidA uttidA
+    uttidB uttidB
+    ...
+    ```
+    
+    OR
+    
+    ```bash
+    uttidA dummy
+    uttidB dummy
+    ...
+    ```
+    
+- [Option] `segments` format
+
+    If the audio data is originally long recording, about > ~1 hour, and each audio file includes multiple utterances in each section, you need to create `segments` file to specify the start time and end time of each utterance. The format is `<utterance_id> <wav_id> <start_time> <end_time>`.
+
+    ```
+    sw02001-A_000098-001156 sw02001-A 0.98 11.56
+    ...
+    ```
+    
+    Note that if using `segments`, `wav.scp` has `<wav_id>` which corresponds to the `segments` instead of `utterance_id`.
+    
+    ```
+    sw02001-A /path/to/sw02001-A.wav
+    ...
+    ```
+
+Once you complete creating the data directory, it's better to check it by `utils/validate_data_dir.sh`.
+
+```bash
+utils/validate_data_dir.sh --no-feats data/train
+utils/validate_data_dir.sh --no-feats data/dev
+utils/validate_data_dir.sh --no-feats data/test
+```
+
+
