@@ -23,8 +23,6 @@ This is a template of SVS recipe for Muskits.
   * [Supported text frontend](#supported-text-frontend)
   * [Supported text cleaner](#supported-text-cleaner)
   * [Supported Models](#supported-models)
-    * [Single speaker model](#single-speaker-model)
-    * [Multi speaker model](#multi-speaker-model)
 
 
 ## Recipe flow
@@ -248,12 +246,12 @@ cd egs/<recipe_name>/svs1
 ./pyscripts/utils/evaluate_mcd.py \
     exp/<model_dir_name>/<decode_dir_name>/eval/wav/wav.scp \
     dump/raw/eval/wav.scp
-
+```
 While these objective metrics can estimate the quality of synthesized speech, it is still difficult to fully determine human perceptual quality from these values, especially with high-fidelity generated speech.
 Therefore, we recommend performing the subjective evaluation if you want to check perceptual quality in detail.
 
 You can refer [this page](https://github.com/kan-bayashi/webMUSHRA/blob/master/HOW_TO_SETUP.md) to launch web-based subjective evaluation system with [webMUSHRA](https://github.com/audiolabs/webMUSHRA).
-```
+
 
 ## Supported text frontend
 
@@ -351,8 +349,6 @@ You can see the code example from [here](https://github.com/espnet/espnet/blob/c
 
 You can train the following models by changing `*.yaml` config for `--train_config` option in `run.sh`.
 
-### Single speaker model
-
 - [Naive-RNN]()
 - [GLU-Transformer]()
 - [MLP-Singer](https://arxiv.org/abs/2106.07886)
@@ -360,17 +356,5 @@ You can train the following models by changing `*.yaml` config for `--train_conf
 
 You can find example configs of the above models in [`egs/ofuton_p_utagoe_db/svs1/conf/tuning`](../../ofuton_p_utagoe_db/svs1/conf/tuning).
 
-### Multi speaker model
-
-You can use / combine the following embedding to build multi-speaker model:
-- [X-Vector](https://ieeexplore.ieee.org/abstract/document/8461375)
-- [GST](https://arxiv.org/abs/1803.09017)
-- Speaker ID embedding (One-hot vector -> Continuous embedding)
-- Language ID embedding (One-hot vector -> Continuous embedding)
-
-X-Vector is provided by kaldi and pretrained with VoxCeleb corpus.
-You can find example configs of the above models in:
-- [`egs2/vctk/tts1/conf/tuning`](../../vctk/tts1/conf/tuning).
-- [`egs2/libritts/tts1/conf/tuning`](../../vctk/libritts/conf/tuning).
 
 
