@@ -14,14 +14,10 @@ This is a template of SVS recipe for Muskits.
     * [5\. SVS statistics collection](#5-svs-statistics-collection)
     * [6\. SVS training](#6-svs-training)
     * [7\. SVS decoding](#7-svs-decoding)
-    * [8\. (Optional) Pack results for upload](#8-optional-pack-results-for-upload)
+    * [8\. Pack results](#8-pack-results)
   * [How to run](#how-to-run)
-    * [FastSpeech training](#fastspeech-training)
-    * [FastSpeech2 training](#fastspeech2-training)
-    * [Multi speaker model with X-vector training](#multi-speaker-model-with-x-vector-training)
     * [Multi speaker model with speaker ID embedding training](#multi-speaker-model-with-speaker-id-embedding-training)
     * [Multi language model with language ID embedding training](#multi-language-model-with-language-id-embedding-training)
-    * [VITS training](#vits-training)
     * [Joint text2wav training](#joint-text2wav-training)
     * [Evaluation](#evaluation)
   * [Supported text frontend](#supported-text-frontend)
@@ -46,16 +42,18 @@ See also:
 
 ### 2. Wav dump / Feature extract & Embedding preparation
 
-If you specify `--feats_type raw`, this is a wav dumping stage which reformats `wav.scp` in data directories.
-Else, if you specify `--feats_type fbank` or `--feats_type stft`, this is a feature extracting stage (to be updated).
+If you specify `--feats_type raw` option, this is a wav dumping stage which reformats `wav.scp` in data directories.
+Else, if you specify `--feats_type fbank` option or `--feats_type stft` option, this is a feature extracting stage (to be updated).
 
 Also, speaker ID embedding and language ID embedding preparation will be performed in this stage if you specify `--use_sid true` and `--use_lid true` options.
 Note that this processing assume that `utt2spk` or `utt2lang` are correctly created in stage 1, please be careful.
 
 ### 3. Removal of long / short data
 
-Processing stage to remove long and short utterances from the training and validation data.
+Processing stage to remove long and short utterances from the training and validation data. 
 You can change the threshold values via `--min_wav_duration` and `--max_wav_duration`.
+
+Empty text will also be removed.
 
 ### 4. Token list generation
 
@@ -70,6 +68,8 @@ See also:
 - [Supported text cleaner](#supported-text-cleaner).
 - [Supported text frontend](#supported-text-frontend).
 
+Data preparation will end in stage 4. You can skip data preparation (stage 1 ~ stage 4) via `--skip_data_prep` option.
+
 ### 5. SVS statistics collection
 
 Statistics calculation stage.
@@ -77,7 +77,7 @@ It collects the shape information of the input and output and calculates statist
 
 ### 6. SVS training
 
-TTS model training stage.
+SVS model training stage.
 You can change the training setting via `--train_config` and `--train_args` options.
 
 See also:
@@ -85,28 +85,25 @@ See also:
 - [Change the configuration for training](https://espnet.github.io/espnet/espnet2_training_option.html)
 - [Distributed training](https://espnet.github.io/espnet/espnet2_distributed.html)
 
+Training process will end in stage 6. You can skip training process (stage 5 ~ stage 6) via `--skip_train` option.
+
 ### 7. SVS decoding
 
-TTS model decoding stage.
+SVS model decoding stage.
 You can change the decoding setting via `--inference_config` and `--inference_args`.
 
 See also:
 - [Change the configuration for training](https://espnet.github.io/espnet/espnet2_training_option.html)
 
-### 8. (Optional) Pack results for upload
+### 8. Pack results
 
 Packing stage.
-It packs the trained model files and uploads to [Zenodo](https://zenodo.org/) (Zenodo upload will be deprecated).
-If you want to run this stage, you need to register your account in zenodo.
+It packs the trained model files.
 
-See also:
-- [ESPnet Model Zoo](https://github.com/espnet/espnet_model_zoo)
-
-#### Stage 10: Upload model to Hugging Face
-
-Upload the trained model to Hugging Face for sharing. Additional information at [Docs](https://espnet.github.io/espnet/espnet2_tutorial.html#packing-and-sharing-your-trained-model).
 
 ## How to run
+
+[Tutorial](https://github.com/SJTMusicTeam/Muskits/blob/main/doc/tutorial.md#muskits)
 
 Here, we show the procedure to run the recipe using `egs2/ljspeech/tts1`.
 
@@ -198,86 +195,6 @@ $ ./run.sh --stage 7 --stop-stage 7
 ```
 This might helps you to understand each stage's processing and directory structure.
 
-### FastSpeech training
-
-If you want to train FastSpeech, additional steps with the teacher model are needed.
-Please make sure you already finished the training of the teacher model (Tacotron2 or Transformer-TTS).
-
-First, decode all of data including training, validation, and evaluation set.
-```sh
-# specify teacher model directory via --tts_exp option
-$ ./run.sh --stage 7 \
-    --tts_exp exp/tts_train_raw_phn_tacotron_g2p_en_no_space \
-    --test_sets "tr_no_dev dev eval1"
-```
-This will generate `durations` for training, validation, and evaluation sets in `exp/tts_train_raw_phn_tacotron_g2p_en_no_space/decode_train.loss.ave`.
-
-Then, you can train FastSpeech by specifying the directory including `durations` via `--teacher_dumpdir` option.
-```sh
-$ ./run.sh --stage 6 \
-    --train_config conf/tuning/train_fastspeech.yaml \
-    --teacher_dumpdir exp/tts_train_raw_phn_tacotron_g2p_en_no_space/decode_train.loss.ave
-```
-
-In the above example, we use generated mel-spectrogram as the target, which is known as knowledge distillation training.
-If you want to use groundtruth mel-spectrogram as the target, we need to use teacher forcing in decoding.
-```sh
-$ ./run.sh --stage 7 \
-    --tts_exp exp/tts_train_raw_phn_tacotron_g2p_en_no_space \
-    --inference_args "--use_teacher_forcing true" \
-    --test_sets "tr_no_dev dev eval1"
-```
-You can get the groundtruth aligned durations in `exp/tts_train_raw_phn_tacotron_g2p_en_no_space/decode_use_teacher_forcingtrue_train.loss.ave`.
-
-Then, you can train FastSpeech without knowledge distillation.
-```sh
-$ ./run.sh --stage 6 \
-    --train_config conf/tuning/train_fastspeech.yaml \
-    --teacher_dumpdir exp/tts_train_raw_phn_tacotron_g2p_en_no_space/decode_use_teacher_forcingtrue_train.loss.ave
-```
-
-### FastSpeech2 training
-
-The procedure is almost the same as FastSpeech but we **MUST** use teacher forcing in decoding.
-```sh
-$ ./run.sh --stage 7 \
-    --tts_exp exp/tts_train_raw_phn_tacotron_g2p_en_no_space \
-    --inference_args "--use_teacher_forcing true" \
-    --test_sets "tr_no_dev dev eval1"
-```
-
-To train FastSpeech2, we use additional feature (F0 and energy).
-Therefore, we need to start from `stage 5` to calculate additional statistics.
-```sh
-$ ./run.sh --stage 5 \
-    --train_config conf/tuning/train_fastspeech2.yaml \
-    --teacher_dumpdir exp/tts_train_raw_phn_tacotron_g2p_en_no_space/decode_use_teacher_forcingtrue_train.loss.ave \
-    --tts_stats_dir exp/tts_train_raw_phn_tacotron_g2p_en_no_space/decode_use_teacher_forcingtrue_train.loss.ave/stats \
-    --write_collected_feats true
-```
-where `--tts_stats_dir` is the option to specify the directory to dump Statistics, and `--write_collected_feats` is the option to dump features in statistics calculation.
-The use of `--write_collected_feats` is optional but it helps to accelerate the training.
-
-### Multi-speaker model with X-vector training
-
-First, you need to run from the stage 2 and 3 with `--use_xvector true` to extract X-vector.
-```sh
-$ ./run.sh --stage 2 --stop-stage 3 --use_xvector true
-```
-You can find the extracted X-vector in `dump/xvector/*/xvector.{ark,scp}`.
-Then, you can run the training with the config which has `spk_embed_dim: 512` in `tts_conf`.
-```yaml
-# e.g.
-tts_conf:
-    spk_embed_dim: 512               # dimension of speaker embedding
-    spk_embed_integration_type: add  # how to integrate speaker embedding
-```
-Please run the training from stage 6.
-```sh
-$ ./run.sh --stage 6 --use_xvector true --train_config /path/to/your_xvector_config.yaml
-```
-
-You can find the example config in [`egs2/vctk/tts1/conf/tuning`](../../vctk/tts1/conf/tuning).
 
 ### Multi-speaker model with speaker ID embedding training
 
@@ -334,108 +251,6 @@ Please run the training from stage 6.
 $ ./run.sh --stage 6 --use_lid true --use_sid true --train_config /path/to/your_multi_spk_multi_lang_config.yaml
 ```
 
-### VITS training
-
-First, the VITS config is **hard coded for 22.05 khz or 44.1 khz** and use different feature extraction method.
-(Note that you can use any feature extraction method but the default method is `linear_spectrogram`.)
-If you want to use it with 24 khz or 16 khz dataset, please be careful about these point.
-
-```sh
-# Assume that data prep stage (stage 1) is finished
-$ ./run.sh --stage 1 --stop-stage 1
-# Single speaker 22.05 khz case
-$ ./run.sh \
-    --stage 2 \
-    --ngpu 4 \
-    --fs 22050 \
-    --n_fft 1024 \
-    --n_shift 256 \
-    --win_length null \
-    --dumpdir dump/22k \
-    --expdir exp/22k \
-    --tts_task gan_tts \
-    --feats_extract linear_spectrogram \
-    --feats_normalize none \
-    --train_config ./conf/tuning/train_vits.yaml \
-    --inference_config ./conf/tuning/decode_vits.yaml \
-    --inference_model latest.pth
-# Single speaker 44.1 khz case
-$ ./run.sh \
-    --stage 2 \
-    --ngpu 4 \
-    --fs 44100 \
-    --n_fft 2048 \
-    --n_shift 512 \
-    --win_length null \
-    --dumpdir dump/44k \
-    --expdir exp/44k \
-    --tts_task gan_tts \
-    --feats_extract linear_spectrogram \
-    --feats_normalize none \
-    --train_config ./conf/tuning/train_full_band_vits.yaml \
-    --inference_config ./conf/tuning/decode_vits.yaml \
-    --inference_model latest.pth
-# Multi speaker with SID 22.05 khz case
-$ ./run.sh \
-    --stage 2 \
-    --use_sid true \
-    --ngpu 4 \
-    --fs 22050 \
-    --n_fft 1024 \
-    --n_shift 256 \
-    --win_length null \
-    --dumpdir dump/22k \
-    --expdir exp/22k \
-    --tts_task gan_tts \
-    --feats_extract linear_spectrogram \
-    --feats_normalize none \
-    --train_config ./conf/tuning/train_multi_spk_vits.yaml \
-    --inference_config ./conf/tuning/decode_vits.yaml \
-    --inference_model latest.pth
-# Multi speaker with SID 44.1 khz case
-$ ./run.sh \
-    --stage 2 \
-    --use_sid true \
-    --ngpu 4 \
-    --fs 44100 \
-    --n_fft 2048 \
-    --n_shift 512 \
-    --win_length null \
-    --dumpdir dump/44k \
-    --expdir exp/44k \
-    --tts_task gan_tts \
-    --feats_extract linear_spectrogram \
-    --feats_normalize none \
-    --train_config ./conf/tuning/train_full_band_multi_spk_vits.yaml \
-    --inference_config ./conf/tuning/decode_vits.yaml \
-    --inference_model latest.pth
-# Multi speaker with X-vector 22.05 khz case (need compiled kaldi to run)
-$ ./run.sh \
-    --stage 2 \
-    --use_xvector true \
-    --ngpu 4 \
-    --fs 22050 \
-    --n_fft 1024 \
-    --n_shift 256 \
-    --win_length null \
-    --dumpdir dump/22k \
-    --expdir exp/22k \
-    --tts_task gan_tts \
-    --feats_extract linear_spectrogram \
-    --feats_normalize none \
-    --train_config ./conf/tuning/train_xvector_vits.yaml \
-    --inference_config ./conf/tuning/decode_vits.yaml \
-    --inference_model latest.pth
-```
-
-The training time requires long times (around several weeks) but around 100k samples can generate a reasonable sounds.
-
-You can find the example configs in:
-- [`egs2/ljspeech/tts1/conf/tuning/train_vits.yaml`: Single speaker 22.05 khz config](../../ljspeech/tts1/conf/tuning/train_vits.yaml).
-- [`egs2/jsut/tts1/conf/tuning/train_full_band_vits.yaml`: Single speaker 44.1 khz config](../../jsut/tts1/conf/tuning/train_full_band_vits.yaml).
-- [`egs2/vctk/tts1/conf/tuning/train_multi_spk_vits.yaml`: Multi speaker with SID 22.05 khz config](../../vctk/tts1/conf/tuning/train_multi_spk_vits.yaml).
-- [`egs2/vctk/tts1/conf/tuning/train_full_band_multi_spk_vits.yaml`: Multi speaker with SID 44.1 khz config](../../vctk/tts1/conf/tuning/train_full_band_multi_spk_vits.yaml).
-- [`egs2/libritts/tts1/conf/tuning/train_xvector_vits.yaml`: Multi speaker with X-vector 22.05 khz config](../../libritts/tts1/conf/tuning/train_xvector_vits.yaml).
 
 ### Joint text2wav training
 
@@ -672,20 +487,18 @@ You can see the code example from [here](https://github.com/espnet/espnet/blob/c
 
 ## Supported Models
 
-You can train the following models by changing `*.yaml` config for `--train_config` option in `tts.sh`.
+You can train the following models by changing `*.yaml` config for `--train_config` option in `run.sh`.
 
 ### Single speaker model
 
-- [Tacotron 2](https://arxiv.org/abs/1712.05884)
-- [Transformer-TTS](https://arxiv.org/abs/1809.08895)
-- [FastSpeech](https://arxiv.org/abs/1905.09263)
-- [FastSpeech2](https://arxiv.org/abs/2006.04558) ([FastPitch](https://arxiv.org/abs/2006.06873))
-- [Conformer](https://arxiv.org/abs/2005.08100)-based FastSpeech / FastSpeech2
-- [VITS](https://arxiv.org/abs/2106.06103)
+- [Naive-RNN]()
+- [GLU-Transformer]()
+- [MLP-Singer](https://arxiv.org/abs/2106.07886)
+- [XiaoIce](https://arxiv.org/pdf/2006.06261)
 
-You can find example configs of the above models in [`egs2/ljspeech/tts1/conf/tuning`](../../ljspeech/tts1/conf/tuning).
+You can find example configs of the above models in [`egs/ofuton_p_utagoe_db/svs1/conf/tuning`](../../ofuton_p_utagoe_db/svs1/conf/tuning).
 
-### Multi speaker model extension
+### Multi speaker model
 
 You can use / combine the following embedding to build multi-speaker model:
 - [X-Vector](https://ieeexplore.ieee.org/abstract/document/8461375)
