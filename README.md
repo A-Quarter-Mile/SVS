@@ -18,15 +18,14 @@ This is a template of SVS recipe for Muskits.
   * [How to run](#how-to-run)
     * [Multi speaker model with speaker ID embedding training](#multi-speaker-model-with-speaker-id-embedding-training)
     * [Multi language model with language ID embedding training](#multi-language-model-with-language-id-embedding-training)
-    * [Joint text2wav training](#joint-text2wav-training)
+    * [Vocoder training](#vocoder-training)
     * [Evaluation](#evaluation)
   * [Supported text frontend](#supported-text-frontend)
   * [Supported text cleaner](#supported-text-cleaner)
   * [Supported Models](#supported-models)
     * [Single speaker model](#single-speaker-model)
     * [Multi speaker model](#multi-speaker-model)
-  * [FAQ](#faq)
-    * [About Kaldi-style data directory](#about-kaldi-style-data-directory)
+
 
 ## Recipe flow
 
@@ -37,8 +36,7 @@ SVS recipe consists of 9 stages.
 Data preparation stage.
 It calls `local/data.sh` to creates Kaldi-style data directories in `data/` for training, validation, and evaluation sets.
 
-See also:
-- [About Kaldi-style data directory](#about-kaldi-style-data-directory)
+Each directory of training set, development set, and evaluation set, has same directory structure. See also http://kaldi-asr.org/doc/data_prep.html about Kaldi data structure. 
 
 ### 2. Wav dump / Feature extract & Embedding preparation
 
@@ -103,88 +101,50 @@ It packs the trained model files.
 
 ## How to run
 
-[Tutorial](https://github.com/SJTMusicTeam/Muskits/blob/main/doc/tutorial.md#muskits)
+See [Tutorial](https://github.com/SJTMusicTeam/Muskits/blob/main/doc/tutorial.md#muskits).
 
-Here, we show the procedure to run the recipe using `egs2/ljspeech/tts1`.
-
-Move on the recipe directory.
-```sh
-$ cd egs2/ljspeech/tts1
-```
-
-Modify `LJSPEECH` variable in `db.sh` if you want to change the download directory.
-```sh
-$ vim db.sh
-```
-
-Modify `cmd.sh` and `conf/*.conf` if you want to use job scheduler.
-See the detail in [using job scheduling system](https://espnet.github.io/espnet/parallelization.html).
-```sh
-$ vim cmd.sh
-```
-
-Run `run.sh`, which conducts all of the stages explained above.
-```sh
-$ ./run.sh
-```
-As a default, we train Tacotron2 (`conf/train.yaml`) with `feats_type=raw` + `token_type=phn`.
+As a default, we train ofuton_p_utagoe (`conf/train.yaml`) with `feats_type=raw` + `token_type=phn`.
 
 Then, you can get the following directories in the recipe directory.
 ```sh
 ├── data/ # Kaldi-style data directory
-│   ├── dev/        # validation set
-│   ├── eval1/      # evaluation set
-│   └── tr_no_dev/  # training set
+│   ├── dev/           # validation set
+│   ├── eval/          # evaluation set
+│   ├── tr_no_dev/     # training set
+│   └── token_list/   
+│        └── phn_none  # token list
 ├── dump/ # feature dump directory
-│   ├── token_list/    # token list (dictionary)
 │   └── raw/
 │       ├── org/
 │       │    ├── tr_no_dev/ # training set before filtering
 │       │    └── dev/       # validation set before filtering
 │       ├── srctexts   # text to create token list
-│       ├── eval1/     # evaluation set
+│       ├── eval/      # evaluation set
 │       ├── dev/       # validation set after filtering
 │       └── tr_no_dev/ # training set after filtering
 └── exp/ # experiment directory
-    ├── tts_stats_raw_phn_tacotron_g2p_en_no_space # statistics
-    └── tts_train_raw_phn_tacotron_g2p_en_no_space # model
-        ├── att_ws/                # attention plot during training
+    ├── svs_stats_raw_phn_none # statistics
+    └── svs_train_raw_phn_none # model
         ├── tensorboard/           # tensorboard log
         ├── images/                # plot of training curves
-        ├── decode_train.loss.ave/ # decoded results
+        ├── valid/                 # valid results
+        ├── decode_train.loss.best/ # decoded results
         │    ├── dev/   # validation set
-        │    └── eval1/ # evaluation set
-        │        ├── att_ws/      # attention plot in decoding
-        │        ├── probs/       # stop probability plot in decoding
+        │    └── eval/ # evaluation set
         │        ├── norm/        # generated features
         │        ├── denorm/      # generated denormalized features
         │        ├── wav/         # generated wav via Griffin-Lim
         │        ├── log/         # log directory
-        │        ├── durations    # duration of each input tokens
         │        ├── feats_type   # feature type
-        │        ├── focus_rates  # focus rate
         │        └── speech_shape # shape info of generated features
         ├── config.yaml             # config used for the training
         ├── train.log               # training log
         ├── *epoch.pth              # model parameter file
         ├── checkpoint.pth          # model + optimizer + scheduler parameter file
         ├── latest.pth              # symlink to latest model parameter
-        ├── *.ave_5best.pth         # model averaged parameters
+        ├── *.ave_2best.pth         # model averaged parameters
         └── *.best.pth              # symlink to the best model parameter loss
 ```
-In decoding, we use Griffin-Lim for waveform generation as a default (End-to-end text-to-wav model can generate waveform directly such as VITS and Joint training model).
-If you want to combine with neural vocoders, you can combine with [kan-bayashi/ParallelWaveGAN](https://github.com/kan-bayashi/ParallelWaveGAN).
-
-```sh
-# Make sure you already install parallel_wavegan repo
-$ . ./path.sh && pip install -U parallel_wavegan
-# Use parallel_wavegan provided pretrained ljspeech style melgan as a vocoder
-$ ./run.sh --stage 7 --inference_args "--vocoder_tag parallel_wavegan/ljspeech_style_melgan.v1" --inference_tag decode_with_ljspeech_style_melgan.v1
-# Use the vocoder trained by `parallel_wavegan` repo manually
-$ ./run.sh --stage 7 --vocoder_file /path/to/checkpoint-xxxxxxsteps.pkl --inference_tag decode_with_my_vocoder
-```
-
-If you want to generate waveform from dumped features, please check [decoding with ESPnet-TTS model's feature](https://github.com/kan-bayashi/ParallelWaveGAN#decoding-with-espnet-tts-models-features).
 
 For the first time, we recommend performing each stage step-by-step via `--stage` and `--stop-stage` options.
 ```sh
@@ -204,11 +164,11 @@ $ ./run.sh --stage 2 --stop-stage 3 --use_sid true
 ```
 You can find the speaker ID file in `dump/raw/*/utt2sid`.
 Note that you need to correctly create `utt2spk` in data prep stage to generate `utt2sid`.
-Then, you can run the training with the config which has `spks: #spks` in `tts_conf`.
+Then, you can run the training with the config which has `spks: #spks` in `svs_conf`.
 ```yaml
 # e.g.
-tts_conf:
-    spks: 128  # Number of speakers
+svs_conf:
+    spks: 5  # Number of speakers
 ```
 Please run the training from stage 6.
 ```sh
@@ -223,10 +183,10 @@ $ ./run.sh --stage 2 --stop-stage 3 --use_lid true
 ```
 You can find the speaker ID file in `dump/raw/*/utt2lid`.
 **Note that you need to additionally create `utt2lang` file in data prep stage to generate `utt2lid`.**
-Then, you can run the training with the config which has `langs: #langs` in `tts_conf`.
+Then, you can run the training with the config which has `langs: #langs` in `svs_conf`.
 ```yaml
 # e.g.
-tts_conf:
+svs_conf:
     langs: 4  # Number of languages
 ```
 Please run the training from stage 6.
@@ -234,7 +194,7 @@ Please run the training from stage 6.
 $ ./run.sh --stage 6 --use_lid true --train_config /path/to/your_multi_lang_config.yaml
 ```
 
-Of course you can further combine with x-vector or speaker ID embedding.
+Of course you can further combine with speaker ID embedding.
 If you want to use both sid and lid, the process should be like this:
 ```sh
 $ ./run.sh --stage 2 --stop-stage 3 --use_lid true --use_sid true
@@ -242,9 +202,9 @@ $ ./run.sh --stage 2 --stop-stage 3 --use_lid true --use_sid true
 Make your config.
 ```yaml
 # e.g.
-tts_conf:
+svs_conf:
     langs: 4   # Number of languages
-    spks: 128  # Number of speakers
+    spks: 5  # Number of speakers
 ```
 Please run the training from stage 6.
 ```sh
@@ -252,81 +212,24 @@ $ ./run.sh --stage 6 --use_lid true --use_sid true --train_config /path/to/your_
 ```
 
 
-### Joint text2wav training
+### Vocoder training
 
-Joint training enables us to train both text2mel and vocoder model jointly with GAN-based training.
-Currently, we tested on only for non-autoregressive text2mel models with ljspeech dataset but the following models and vocoders are supported.
+If you `--vocoder_file` is set to none, Griffin-Lim will be used.
+You can also train corresponding vocoder using [kan-bayashi/ParallelWaveGAN](https://github.com/kan-bayashi/ParallelWaveGAN)..
 
-**Text2mel**
-
-- Tacotron2
-- Transformer
-- FastSpeech
-- FastSpeech2
-
-**Vocoder**
-
-- ParallelWaveGAN G / D
-- (Multi-band) MelGAN G / D
-- HiFiGAN G / D
-- StyleMelGAN G / D
-
-Here, we show the example procedure to train conformer fastspeech2 + hifigan jointly with two training strategy (training from scratch and fine-tuning of pretrained text2mel and vocoder).
+Pretrained vocoder is like follows:
 
 ```sh
-# Make sure you are ready to train fastspeech2 (already prepared durations file with teacher model)
-$ ...
-# Case 1: Train conformer fastspeech2 + hifigan G + hifigan D from scratch
-$ ./run.sh \
-    --stage 6 \
-    --tts_task gan_tts \
-    --train_config ./conf/tuning/train_joint_conformer_fastspeech2_hifigan.yaml
-# Case 2: Fine-tuning of pretrained conformer fastspeech2 + hifigan G + hifigan D
-# (a) Prepare pretrained models as follows
-$ tree -L 2 exp
-exp
-...
-├── ljspeech_hifigan.v1  # pretrained vocoder
-│   ├── checkpoint-2500000steps.pkl
-│   ├── config.yml
-│   └── stats.h5
-├── tts_train_conformer_fastspeech2_raw_phn_tacotron_g2p_en_no_space  # pretrained text2mel
-│   ├── config.yaml
-│   ├── images
-│   └── train.loss.ave_5best.pth
-...
-# If you want to use the same files of this example
-$ ipython
-# Download text2mel model
-[ins] In [1]: from espnet_model_zoo.downloader import ModelDownloader
-[ins] In [2]: d = ModelDownloader("./downloads")
-[ins] In [3]: d.download_and_unpack("kan-bayashi/ljspeech_conformer_fastspeech2")
-# Download vocoder
-[ins] In [4]: from parallel_wavegan.utils import download_pretrained_model
-[ins] In [5]: download_pretrained_model("ljspeech_hifigan.v1", "downloads")
-# Move them to exp directory
-$ mv download/59c43ac0d40b121060bd71dd418f5ece/exp/tts_train_conformer_fastspeech2_raw_phn_tacotron_g2p_en_no_space exp
-$ mv downloads/ljspeech_hifigan.v1 exp
-# (b) Convert .pkl checkpoint to espnet loadable format
-$ ipython
-[ins] In [1]: import torch
-[ins] In [2]: d = torch.load("./exp/ljspeech_hifigan.v1/checkpoint-2500000steps.pkl")
-[ins] In [3]: torch.save(d["model"]["generator"], "generator.pth")
-[ins] In [4]: torch.save(d["model"]["discriminator"], "discriminator.pth")
-# (c) Prepare configuration
-$ vim conf/tuning/finetune_joint_conformer_fastspeech2_hifigan.yaml
-# edit text2mel_params / generator_params / discriminator_params to be the same as the pretrained model
-# edit init_param part to specify the correct path of the pretrained model
-# (d) Run training
-$ ./run.sh \
-    --stage 6 \
-    --tts_task gan_tts \
-    --train_config ./conf/tuning/finetune_joint_conformer_fastspeech2_hifigan.yaml
+*_hifigan.v1 
+├── checkpoint-xxxxxxsteps.pkl
+├── config.yml
+└── stats.h5
 ```
 
-You can find the example configs in:
-- [`egs2/ljspeech/tts1/conf/tuning/train_joint_conformer_fastspeech2_hifigan.yaml`: Joint training of conformer fastspeech2 + hifigan](../../ljspeech/tts1/conf/tuning/train_joint_conformer_fastspeech2_hifigan.yaml).
-- [`egs2/ljspeech/tts1/conf/tuning/finetune_joint_conformer_fastspeech2_hifigan.yaml`: Joint fine-tuning of conformer fastspeech2 + hifigan](../../ljspeech/tts1/conf/tuning/finetune_joint_conformer_fastspeech2_hifigan.yaml).
+```sh
+# Use the vocoder trained by `parallel_wavegan` repo manually
+$ ./run.sh --stage 7 --vocoder_file /path/to/checkpoint-xxxxxxsteps.pkl --inference_tag decode_with_my_vocoder
+```
 
 ### Evaluation
 
@@ -510,109 +413,5 @@ X-Vector is provided by kaldi and pretrained with VoxCeleb corpus.
 You can find example configs of the above models in:
 - [`egs2/vctk/tts1/conf/tuning`](../../vctk/tts1/conf/tuning).
 - [`egs2/libritts/tts1/conf/tuning`](../../vctk/libritts/conf/tuning).
-
-## FAQ
-
-### About Kaldi-style data directory
-
-Each directory of training set, development set, and evaluation set, has same directory structure. See also http://kaldi-asr.org/doc/data_prep.html about Kaldi data structure. 
-We recommend you running `mini_an4` recipe and checking the contents of `data/` by yourself.
-
-```bash
-cd egs2/mini_an4/asr1
-./run.sh
-```
-
-- Directory structure
-    ```
-    data/
-      train/
-        - text     # The transcription
-        - wav.scp  # Wave file path
-        - utt2spk  # A file mapping utterance-id to speaker-id
-        - spk2utt  # A file mapping speaker-id to utterance-id
-        - segments # [Option] Specifying start and end time of each utterance
-      dev/
-        ...
-      test/
-        ...
-    ```
-
-- `text` format
-    ```
-    uttidA <transcription>
-    uttidB <transcription>
-    ...
-    ```
-
-- `wav.scp` format
-    ```
-    uttidA /path/to/uttidA.wav
-    uttidB /path/to/uttidB.wav
-    ...
-    ```
-
-- `utt2spk` format
-    ```
-    uttidA speakerA
-    uttidB speakerB
-    uttidC speakerA
-    uttidD speakerB
-    ...
-    ```
-
-- `spk2utt` format
-    ```
-    speakerA uttidA uttidC ...
-    speakerB uttidB uttidD ...
-    ...
-    ```
- 
-    Note that `spk2utt` file can be generated by `utt2spk`, and `utt2spk` can be generated by `spk2utt`, so it's enough to create either one of them.
-
-    ```bash
-    utils/utt2spk_to_spk2utt.pl data/train/utt2spk > data/train/spk2utt
-    utils/spk2utt_to_utt2spk.pl data/train/spk2utt > data/train/utt2spk
-    ```
-    
-    If your corpus doesn't include speaker information, give the same speaker id as the utterance id to satisfy the directory format, otherwise give the same speaker id for all utterances (Actually we don't use speaker information for asr recipe now).
-    
-    ```bash
-    uttidA uttidA
-    uttidB uttidB
-    ...
-    ```
-    
-    OR
-    
-    ```bash
-    uttidA dummy
-    uttidB dummy
-    ...
-    ```
-    
-- [Option] `segments` format
-
-    If the audio data is originally long recording, about > ~1 hour, and each audio file includes multiple utterances in each section, you need to create `segments` file to specify the start time and end time of each utterance. The format is `<utterance_id> <wav_id> <start_time> <end_time>`.
-
-    ```
-    sw02001-A_000098-001156 sw02001-A 0.98 11.56
-    ...
-    ```
-    
-    Note that if using `segments`, `wav.scp` has `<wav_id>` which corresponds to the `segments` instead of `utterance_id`.
-    
-    ```
-    sw02001-A /path/to/sw02001-A.wav
-    ...
-    ```
-
-Once you complete creating the data directory, it's better to check it by `utils/validate_data_dir.sh`.
-
-```bash
-utils/validate_data_dir.sh --no-feats data/train
-utils/validate_data_dir.sh --no-feats data/dev
-utils/validate_data_dir.sh --no-feats data/test
-```
 
 
