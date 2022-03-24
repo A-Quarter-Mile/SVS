@@ -233,64 +233,21 @@ $ ./run.sh --stage 7 --vocoder_file /path/to/checkpoint-xxxxxxsteps.pkl --infere
 
 ### Evaluation
 
-We provide three objective evaluation metrics:
+We provide a objective evaluation metrics:
 
 - Mel-cepstral distortion (MCD)
-- Log-F0 root mean square error (log-F0 RMSE)
-- Character error rate (CER)
 
-MCD and log-F0 RMSE reflect speaker, prosody, and phonetic content similarities, and CER can reflect the intelligibility.
-For MCD and log-F0 RMSE, we apply dynamic time-warping (DTW) to match the length difference between ground-truth speech and generated speech.
+For MCD, we apply dynamic time-warping (DTW) to match the length difference between ground-truth speech and generated speech.
 
 Here we show the example command to calculate objective metrics:
 
 ```sh
-cd egs2/<recipe_name>/tts1
+cd egs/<recipe_name>/svs1
 . ./path.sh
 # Evaluate MCD
 ./pyscripts/utils/evaluate_mcd.py \
-    exp/<model_dir_name>/<decode_dir_name>/eval1/wav/wav.scp \
-    dump/raw/eval1/wav.scp
-# Evaluate log-F0 RMSE
-./pyscripts/utils/evaluate_f0.py \
-    exp/<model_dir_name>/<decode_dir_name>/eval1/wav/wav.scp \
-    dump/raw/eval1/wav.scp
-# If you want to calculate more precisely, limit the F0 range
-./pyscripts/utils/evaluate_f0.py \
-    --f0min xxx \
-    --f0max yyy \
-    exp/<model_dir_name>/<decode_dir_name>/eval1/wav/wav.scp \
-    dump/raw/eval1/wav.scp
-# Evaluate CER
-./scripts/utils/evaluate_asr.sh \
-    --model_tag <asr_model_tag> \
-    --nj 1 \
-    --inference_args "--beam_size 10 --ctc_weight 0.4 --lm_weight 0.0" \
-    --gt_text "dump/raw/eval1/text" \
-    exp/<model_dir_name>/<decode_dir_name>/eval1/wav/wav.scp \
-    exp/<model_dir_name>/<decode_dir_name>/asr_results
-# Since ASR model does not use punctuation, it is better to remove punctuations if it contains
-./utils/remove_punctuation.pl < dump/raw/eval1/text > dump/raw/eval1/text.no_punc
-./scripts/utils/evaluate_asr.sh \
-    --model_tag <asr_model_tag> \
-    --nj 1 \
-    --inference_args "--beam_size 10 --ctc_weight 0.4 --lm_weight 0.0" \
-    --gt_text "dump/raw/eval1/text.no_punc" \
-    exp/<model_dir_name>/<decode_dir_name>/eval1/wav/wav.scp \
-    exp/<model_dir_name>/<decode_dir_name>/asr_results
-# Some ASR models assume the existence of silence at the beginning and the end of audio
-# Then, you can perform silence padding with sox to get more reasonable ASR results
-awk < "exp/<model_dir_name>/<decode_dir_name>/eval1/wav/wav.scp" \
-    '{print $1 " sox " $2 " -t wav - pad 0.25 0.25 |"}' \
-    > exp/<model_dir_name>/<decode_dir_name>/eval1/wav/wav_pad.scp
-./scripts/utils/evaluate_asr.sh \
-    --model_tag <asr_model_tag> \
-    --nj 1 \
-    --inference_args "--beam_size 10 --ctc_weight 0.4 --lm_weight 0.0" \
-    --gt_text "dump/raw/eval1/text.no_punc" \
-    exp/<model_dir_name>/<decode_dir_name>/eval1/wav/wav_pad.scp \
-    exp/<model_dir_name>/<decode_dir_name>/asr_results
-```
+    exp/<model_dir_name>/<decode_dir_name>/eval/wav/wav.scp \
+    dump/raw/eval/wav.scp
 
 While these objective metrics can estimate the quality of synthesized speech, it is still difficult to fully determine human perceptual quality from these values, especially with high-fidelity generated speech.
 Therefore, we recommend performing the subjective evaluation if you want to check perceptual quality in detail.
@@ -299,7 +256,7 @@ You can refer [this page](https://github.com/kan-bayashi/webMUSHRA/blob/master/H
 
 ## Supported text frontend
 
-You can change via `--g2p` option in `tts.sh`.
+You can change via `--g2p` option in `svs.sh`.
 
 - `none`: Just separate by space
     - e.g.: `HH AH0 L OW1 <space> W ER1 L D` -> `[HH, AH0, L, OW1, <space>, W, ER1, L D]`
