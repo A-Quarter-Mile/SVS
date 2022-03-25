@@ -275,7 +275,7 @@ You can see the code example from [here](https://github.com/SJTMusicTeam/Muskits
 You can train the following models by changing `*.yaml` config for `--train_config` option in `run.sh`.
 
 - [Naive-RNN]()
-- [GLU-Transformer]()
+- [GLU-Transformer](https://arxiv.org/abs/1910.09989)
 - [MLP-Singer](https://arxiv.org/abs/2106.07886)
 - [XiaoIce](https://arxiv.org/pdf/2006.06261)
 
