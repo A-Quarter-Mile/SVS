@@ -79,7 +79,6 @@ You can change the training setting via `--train_config` and `--train_args` opti
 See also:
 - [Supported models](#supported-models).
 - [Change the configuration for training](https://espnet.github.io/espnet/espnet2_training_option.html)
-- [Distributed training](https://espnet.github.io/espnet/espnet2_distributed.html)
 
 Training process will end in stage 6. You can skip training process (stage 5 ~ stage 6) via `--skip_train` option.
 
@@ -259,76 +258,6 @@ You can change via `--g2p` option in `svs.sh`.
 
 - `none`: Just separate by space
     - e.g.: `HH AH0 L OW1 <space> W ER1 L D` -> `[HH, AH0, L, OW1, <space>, W, ER1, L D]`
-- `g2p_en`: [Kyubyong/g2p](https://github.com/Kyubyong/g2p)
-    - e.g. `Hello World` -> `[HH, AH0, L, OW1, <space>, W, ER1, L D]`
-- `g2p_en_no_space`: [Kyubyong/g2p](https://github.com/Kyubyong/g2p)
-    - Same G2P but do not use word separator
-    - e.g. `Hello World` -> `[HH, AH0, L, OW1, W, ER1, L, D]`
-- `pyopenjtalk`: [r9y9/pyopenjtalk](https://github.com/r9y9/pyopenjtalk)
-    - e.g. `こ、こんにちは` -> `[k, o, pau, k, o, N, n, i, ch, i, w, a]`
-- `pyopenjtalk_kana`: [r9y9/pyopenjtalk](https://github.com/r9y9/pyopenjtalk)
-    - Use kana instead of phoneme
-    - e.g. `こ、こんにちは` -> `[コ, 、, コ, ン, ニ, チ, ワ]`
-- `pyopenjtalk_accent`: [r9y9/pyopenjtalk](https://github.com/r9y9/pyopenjtalk)
-    - Add accent labels in addition to phoneme labels
-    - Based on [Developing a Japanese End-to-End Speech Synthesis Server Considering Accent Phrases](https://jglobal.jst.go.jp/detail?JGLOBAL_ID=202102244593559954)
-    - e.g. `こ、こんにちは` -> `[k, 1, 0, o, 1, 0, k, 5, -4, o, 5, -4, N, 5, -3, n, 5, -2, i, 5, -2, ch, 5, -1, i, 5, -1, w, 5, 0, a, 5, 0]`
-- `pyopenjtalk_accent_with_pause`: [r9y9/pyopenjtalk](https://github.com/r9y9/pyopenjtalk)
-    - Add a pause label in addition to phoneme and accent labels
-    - Based on [Developing a Japanese End-to-End Speech Synthesis Server Considering Accent Phrases](https://jglobal.jst.go.jp/detail?JGLOBAL_ID=202102244593559954)
-    - e.g. `こ、こんにちは` -> `[k, 1, 0, o, 1, 0, pau, k, 5, -4, o, 5, -4, N, 5, -3, n, 5, -2, i, 5, -2, ch, 5, -1, i, 5, -1, w, 5, 0, a, 5, 0]`
-- `pyopenjtalk_prosody`: [r9y9/pyopenjtalk](https://github.com/r9y9/pyopenjtalk)
-    - Use special symbols for prosody control
-    - Based on [Prosodic features control by symbols as input of sequence-to-sequence acoustic modeling for neural TTS](https://doi.org/10.1587/transinf.2020EDP7104)
-    - e.g. `こ、こんにちは` -> `[^, k, #, o, _, k, o, [, N, n, i, ch, i, w, a, $]`
-- `pypinyin`: [mozillanzg/python-pinyin](https://github.com/mozillazg/python-pinyin)
-    - e.g. `卡尔普陪外孙玩滑梯。` -> `[ka3, er3, pu3, pei2, wai4, sun1, wan2, hua2, ti1, 。]`
-- `pypinyin_phone`: [mozillanzg/python-pinyin](https://github.com/mozillazg/python-pinyin)
-    - Separate into first and last parts
-    - e.g. `卡尔普陪外孙玩滑梯。` -> `[k, a3, er3, p, u3, p, ei2, wai4, s, un1, uan2, h, ua2, t, i1, 。]`
-- `espeak_ng_arabic`: [espeak-ng/espeak-ng](https://github.com/espeak-ng/espeak-ng)
-    - e.g. `السلام عليكم` -> `[ʔ, a, s, s, ˈa, l, aː, m, ʕ, l, ˈiː, k, m]`
-    - This result provided by the wrapper library [bootphon/phonemizer](https://github.com/bootphon/phonemizer)
-- `espeak_ng_german`: [espeak-ng/espeak-ng](https://github.com/espeak-ng/espeak-ng)
-    - e.g. `Das hört sich gut an.` -> `[d, a, s, h, ˈœ, ɾ, t, z, ɪ, ç, ɡ, ˈuː, t, ˈa, n, .]`
-    - This result provided by the wrapper library [bootphon/phonemizer](https://github.com/bootphon/phonemizer)
-- `espeak_ng_french`: [espeak-ng/espeak-ng](https://github.com/espeak-ng/espeak-ng)
-    - e.g. `Bonjour le monde.` -> `[b, ɔ̃, ʒ, ˈu, ʁ, l, ə-, m, ˈɔ̃, d, .]`
-    - This result provided by the wrapper library [bootphon/phonemizer](https://github.com/bootphon/phonemizer)
-- `espeak_ng_spanish`: [espeak-ng/espeak-ng](https://github.com/espeak-ng/espeak-ng)
-    - e.g. `Hola Mundo.` -> `[ˈo, l, a, m, ˈu, n, d, o, .]`
-    - This result provided by the wrapper library [bootphon/phonemizer](https://github.com/bootphon/phonemizer)
-- `espeak_ng_russian`: [espeak-ng/espeak-ng](https://github.com/espeak-ng/espeak-ng)
-    - e.g. `Привет мир.` -> `[p, rʲ, i, vʲ, ˈe, t, mʲ, ˈi, r, .]`
-    - This result provided by the wrapper library [bootphon/phonemizer](https://github.com/bootphon/phonemizer)
-- `espeak_ng_greek`: [espeak-ng/espeak-ng](https://github.com/espeak-ng/espeak-ng)
-    - e.g. `Γειά σου Κόσμε.` -> `[j, ˈa, s, u, k, ˈo, s, m, e, .]`
-    - This result provided by the wrapper library [bootphon/phonemizer](https://github.com/bootphon/phonemizer)
-- `espeak_ng_finnish`: [espeak-ng/espeak-ng](https://github.com/espeak-ng/espeak-ng)
-    - e.g. `Hei maailma.` -> `[h, ˈei, m, ˈaː, ɪ, l, m, a, .]`
-    - This result provided by the wrapper library [bootphon/phonemizer](https://github.com/bootphon/phonemizer)
-- `espeak_ng_hungarian`: [espeak-ng/espeak-ng](https://github.com/espeak-ng/espeak-ng)
-    - e.g. `Helló Világ.` -> `[h, ˈɛ, l, l, oː, v, ˈi, l, aː, ɡ, .]`
-    - This result provided by the wrapper library [bootphon/phonemizer](https://github.com/bootphon/phonemizer)
-- `espeak_ng_dutch`: [espeak-ng/espeak-ng](https://github.com/espeak-ng/espeak-ng)
-    - e.g. `Hallo Wereld.` -> `[h, ˈɑ, l, oː, ʋ, ˈɪː, r, ə, l, t, .]`
-    - This result provided by the wrapper library [bootphon/phonemizer](https://github.com/bootphon/phonemizer)
-- `espeak_ng_hindi`: [espeak-ng/espeak-ng](https://github.com/espeak-ng/espeak-ng)
-    - e.g. `नमस्ते दुनिया` -> `[n, ə, m, ˈʌ, s, t, eː, d, ˈʊ, n, ɪ, j, ˌaː]`
-    - This result provided by the wrapper library [bootphon/phonemizer](https://github.com/bootphon/phonemizer)
-- `espeak_ng_english_us_vits`: [espeak-ng/espeak-ng](https://github.com/espeak-ng/espeak-ng)
-    - VITS official implementation-like processing (https://github.com/jaywalnut310/vits)
-    - e.g. `Hello World.` -> `[h, ə, l, ˈ, o, ʊ, , <space>, w, ˈ, ɜ, ː, l, d, .]`
-    - This result provided by the wrapper library [bootphon/phonemizer](https://github.com/bootphon/phonemizer)
-- `g2pk`: [Kyubyong/g2pK](https://github.com/Kyubyong/g2pK)
-    - e.g. `안녕하세요 세계입니다.` -> `[ᄋ, ᅡ, ᆫ, ᄂ, ᅧ, ᆼ, ᄒ, ᅡ, ᄉ, ᅦ, ᄋ, ᅭ,  , ᄉ, ᅦ, ᄀ, ᅨ, ᄋ, ᅵ, ᆷ, ᄂ, ᅵ, ᄃ, ᅡ, .]`
-- `g2pk_no_space`: [Kyubyong/g2pK](https://github.com/Kyubyong/g2pK)
-    - Same G2P but do not use word separator
-    - e.g. `안녕하세요 세계입니다.` -> `[ᄋ, ᅡ, ᆫ, ᄂ, ᅧ, ᆼ, ᄒ, ᅡ, ᄉ, ᅦ, ᄋ, ᅭ, ᄉ, ᅦ, ᄀ, ᅨ, ᄋ, ᅵ, ᆷ, ᄂ, ᅵ, ᄃ, ᅡ, .]`
-- `korean_jaso`: [jdongian/python-jamo](https://github.com/jdongian/python-jamo)
-    - e.g. `나는 학교에 갑니다.` -> `[ᄂ, ᅡ, ᄂ, ᅳ, ᆫ, <space>, ᄒ, ᅡ, ᆨ, ᄀ, ᅭ, ᄋ, ᅦ, <space>, ᄀ, ᅡ, ᆸ, ᄂ, ᅵ, ᄃ, ᅡ, .]`
-- `korean_jaso_no_space`: [jdongian/python-jamo](https://github.com/jdongian/python-jamo)
-    - e.g. `나는 학교에 갑니다.` -> `[ᄂ, ᅡ, ᄂ, ᅳ, ᆫ, ᄒ, ᅡ, ᆨ, ᄀ, ᅭ, ᄋ, ᅦ, ᄀ, ᅡ, ᆸ, ᄂ, ᅵ, ᄃ, ᅡ, .]`
 
 You can see the code example from [here](https://github.com/SJTMusicTeam/Muskits/blob/main/muskit/text/phoneme_tokenizer.py).
 
@@ -338,10 +267,6 @@ You can see the code example from [here](https://github.com/SJTMusicTeam/Muskits
 You can change via `--cleaner` option in `svs.sh`.
 
 - `none`: No text cleaner.
-- `tacotron`: [keithito/tacotron](https://github.com/keithito/tacotron)
-    - e.g.`"(Hello-World);  & jr. & dr."` ->`HELLO WORLD, AND JUNIOR AND DOCTOR`
-- `jaconv`: [kazuhikoarase/jaconv](https://github.com/kazuhikoarase/jaconv)
-    - e.g. `”あらゆる”　現実を　〜　’すべて’ 自分の　ほうへ　ねじ曲げたのだ。"` -> `"あらゆる" 現実を ー \'すべて\' 自分の ほうへ ねじ曲げたのだ。`
 
 You can see the code example from [here](https://github.com/SJTMusicTeam/Muskits/blob/main/muskit/text/cleaner.py).
 
