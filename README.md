@@ -335,7 +335,7 @@ You can see the code example from [here](https://github.com/espnet/espnet/blob/c
 
 ## Supported text cleaner
 
-You can change via `--cleaner` option in `tts.sh`.
+You can change via `--cleaner` option in `svs.sh`.
 
 - `none`: No text cleaner.
 - `tacotron`: [keithito/tacotron](https://github.com/keithito/tacotron)
