@@ -109,8 +109,8 @@ Then, you can get the following directories in the recipe directory.
 │   ├── dev/           # validation set
 │   ├── eval/          # evaluation set
 │   ├── tr_no_dev/     # training set
-│   └── token_list/   
-│        └── phn_none  # token list
+│   └── token_list/    # token list (directory)
+│        └── phn_none_jp/  # token list
 ├── dump/ # feature dump directory
 │   └── raw/
 │       ├── org/
@@ -121,8 +121,8 @@ Then, you can get the following directories in the recipe directory.
 │       ├── dev/       # validation set after filtering
 │       └── tr_no_dev/ # training set after filtering
 └── exp/ # experiment directory
-    ├── svs_stats_raw_phn_none # statistics
-    └── svs_train_raw_phn_none # model
+    ├── svs_stats_raw_phn_none_jp  # statistics
+    └── svs_train_raw_phn_none_jp  # model
         ├── tensorboard/           # tensorboard log
         ├── images/                # plot of training curves
         ├── valid/                 # valid results
@@ -202,7 +202,7 @@ Make your config.
 # e.g.
 svs_conf:
     langs: 4   # Number of languages
-    spks: 5  # Number of speakers
+    spks: 5    # Number of speakers
 ```
 Please run the training from stage 6.
 ```sh
@@ -330,7 +330,7 @@ You can change via `--g2p` option in `svs.sh`.
 - `korean_jaso_no_space`: [jdongian/python-jamo](https://github.com/jdongian/python-jamo)
     - e.g. `나는 학교에 갑니다.` -> `[ᄂ, ᅡ, ᄂ, ᅳ, ᆫ, ᄒ, ᅡ, ᆨ, ᄀ, ᅭ, ᄋ, ᅦ, ᄀ, ᅡ, ᆸ, ᄂ, ᅵ, ᄃ, ᅡ, .]`
 
-You can see the code example from [here](https://github.com/espnet/espnet/blob/cd7d28e987b00b30f8eb8efd7f4796f048dc3be9/test/espnet2/text/test_phoneme_tokenizer.py).
+You can see the code example from [here](https://github.com/SJTMusicTeam/Muskits/blob/main/muskit/text/phoneme_tokenizer.py).
 
 
 ## Supported text cleaner
@@ -343,7 +343,7 @@ You can change via `--cleaner` option in `svs.sh`.
 - `jaconv`: [kazuhikoarase/jaconv](https://github.com/kazuhikoarase/jaconv)
     - e.g. `”あらゆる”　現実を　〜　’すべて’ 自分の　ほうへ　ねじ曲げたのだ。"` -> `"あらゆる" 現実を ー \'すべて\' 自分の ほうへ ねじ曲げたのだ。`
 
-You can see the code example from [here](https://github.com/espnet/espnet/blob/cd7d28e987b00b30f8eb8efd7f4796f048dc3be9/test/espnet2/text/test_cleaner.py).
+You can see the code example from [here](https://github.com/SJTMusicTeam/Muskits/blob/main/muskit/text/cleaner.py).
 
 ## Supported Models
 
