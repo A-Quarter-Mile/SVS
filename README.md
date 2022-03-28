@@ -255,18 +255,20 @@ You can refer [this page](https://github.com/kan-bayashi/webMUSHRA/blob/master/H
 ## About Kaldi style data directory
 
 Each directory of training set, development set, and evaluation set, has same directory structure. See also http://kaldi-asr.org/doc/data_prep.html about Kaldi data structure. 
-We recommend you running `mini_an4` recipe and checking the contents of `data/` by yourself.
+We recommend you running `ofuton_p_utagoe_db` recipe and checking the contents of `data/` by yourself.
 
 ```bash
-cd egs/mini_an4/asr1
+cd egs/ofuton_p_utagoe_db/svs1
 ./run.sh
 ```
 
 - Directory structure
     ```
     data/
-      train/
+      tr_no_dev/   # Training set directory
         - text     # The transcription
+        - label    # Specifying start and end time of the transcription 
+        - midi.scp # MIDI file path
         - wav.scp  # Wave file path
         - utt2spk  # A file mapping utterance-id to speaker-id
         - spk2utt  # A file mapping speaker-id to utterance-id
@@ -274,6 +276,8 @@ cd egs/mini_an4/asr1
       dev/
         ...
       test/
+        ...
+      token_list/   # token list directory
         ...
     ```
 
@@ -283,7 +287,21 @@ cd egs/mini_an4/asr1
     uttidB <transcription>
     ...
     ```
-
+    
+- `label` format
+    ```
+    uttidA (startA1, endA1, phA1) (startA2, endA2, phA1) ...
+    uttidB (startB1, endB1, phB1) (startB2, endB2, phB2) ...
+    ...
+    ```
+    
+- `midi.scp` format
+    ```
+    uttidA /path/to/uttidA.mid
+    uttidB /path/to/uttidB.mid
+    ...
+    ```
+    
 - `wav.scp` format
     ```
     uttidA /path/to/uttidA.wav
