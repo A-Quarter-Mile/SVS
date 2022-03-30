@@ -28,7 +28,7 @@ This is a template of SVS recipe for Muskits.
 
 ## Recipe flow
 
-SVS recipe consists of 9 stages.
+SVS recipe consists of 8 stages.
 
 ### 1. Database-dependent data preparation
 
@@ -38,17 +38,18 @@ It calls `local/data.sh` to creates Kaldi-style data directories but with additi
 See also:
 - [About data directory](#about-data-directory)
 
-### 2. Wav dump / Feature extract & Embedding preparation
+### 2. Standard audio and midi formatting
 
 If you specify `--feats_type raw` option, this is a wav dumping stage which reformats `wav.scp` in data directories.
 Else, if you specify `--feats_type fbank` option or `--feats_type stft` option, this is a feature extracting stage (to be updated).
+MIDI is also normalized and segmented at this stage.
 
-Also, speaker ID embedding and language ID embedding preparation will be performed in this stage if you specify `--use_sid true` and `--use_lid true` options.
+Additionally, speaker ID embedding and language ID embedding preparation will be performed in this stage if you specify `--use_sid true` and `--use_lid true` options.
 Note that this processing assume that `utt2spk` or `utt2lang` are correctly created in stage 1, please be careful.
 
-### 3. Removal of long / short data
+### 3. Filtering
 
-Processing stage to remove long and short utterances from the training and validation data. 
+Processing stage to remove long and short utterances from the training and validation sets. 
 You can change the threshold values via `--min_wav_duration` and `--max_wav_duration`.
 
 Empty text will also be removed.
@@ -57,8 +58,7 @@ Empty text will also be removed.
 
 Token list generation stage.
 It generates token list (dictionary) from `srctexts`.
-You can change the tokenization type via `--token_type` option.
-`token_type=char` and `token_type=phn` are supported.
+You can change the tokenization type via `--token_type` option. `token_type=phn` are supported.
 If `--cleaner` option is specified, the input text will be cleaned with the specified cleaner.
 If `token_type=phn`, the input text will be converted with G2P module specified by `--g2p` option.
 
@@ -68,12 +68,12 @@ See also:
 
 Data preparation will end in stage 4. You can skip data preparation (stage 1 ~ stage 4) via `--skip_data_prep` option.
 
-### 5. SVS statistics collection
+### 5. Statistics collection
 
 Statistics calculation stage.
-It collects the shape information of the input and output and calculates statistics for feature normalization (mean and variance over training data).
+It collects the shape information of the input and output and calculates statistics for feature normalization (mean and variance over training and validation sets).
 
-### 6. SVS training
+### 6. Model training
 
 SVS model training stage.
 You can change the training setting via `--train_config` and `--train_args` options.
@@ -84,12 +84,14 @@ See also:
 
 Training process will end in stage 6. You can skip training process (stage 5 ~ stage 6) via `--skip_train` option.
 
-### 7. SVS decoding
+### 7. Model inference
 
 SVS model decoding stage.
 You can change the decoding setting via `--inference_config` and `--inference_args`.
+Compatible vocoder can be trained and loaded.
 
 See also:
+- [Vocoder Trainging](#vocoder-training)
 - [Change the configuration for training](https://espnet.github.io/espnet/espnet2_training_option.html)
 
 ### 8. Pack results
@@ -181,7 +183,7 @@ First, you need to run from the stage 2 and 3 with `--use_lid true` to extract s
 $ ./run.sh --stage 2 --stop-stage 3 --use_lid true
 ```
 You can find the speaker ID file in `dump/raw/*/utt2lid`.
-**Note that you need to additionally create `utt2lang` file in data prep stage to generate `utt2lid`.**
+**Note that you need to additionally create `utt2lang` file in stage 1 to generate `utt2lid`.**
 Then, you can run the training with the config which has `langs: #langs` in `svs_conf`.
 ```yaml
 # e.g.
@@ -213,7 +215,7 @@ $ ./run.sh --stage 6 --use_lid true --use_sid true --train_config /path/to/your_
 
 ### Vocoder training
 
-If you `--vocoder_file` is set to none, Griffin-Lim will be used.
+If your `--vocoder_file` is set to none, Griffin-Lim will be used.
 You can also train corresponding vocoder using [kan-bayashi/ParallelWaveGAN](https://github.com/kan-bayashi/ParallelWaveGAN)..
 
 Pretrained vocoder is like follows:
