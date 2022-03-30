@@ -20,7 +20,7 @@ This is a template of SVS recipe for Muskits.
     * [Multi language model with language ID embedding training](#multi-language-model-with-language-id-embedding-training)
     * [Vocoder training](#vocoder-training)
     * [Evaluation](#evaluation)
-  * [About Kaldi style data directory](#about-kaldi-style-data-directory)
+  * [About data directory](#about-data-directory)
   * [Supported text frontend](#supported-text-frontend)
   * [Supported text cleaner](#supported-text-cleaner)
   * [Supported Models](#supported-models)
@@ -91,10 +91,10 @@ You can change the decoding setting via `--inference_config` and `--inference_ar
 Compatible vocoder can be trained and loaded.
 
 See also:
-- [Vocoder Trainging](#vocoder-training)
+- [Vocoder trainging](#vocoder-training)
 - [Change the configuration for training](https://espnet.github.io/espnet/espnet2_training_option.html)
 
-### 8. Pack results
+### 8. Model packing
 
 Packing stage.
 It packs the trained model files.
@@ -234,9 +234,11 @@ $ ./run.sh --stage 7 --vocoder_file /path/to/checkpoint-xxxxxxsteps.pkl --infere
 
 ### Evaluation
 
-We provide a objective evaluation metrics:
+We provide three objective evaluation metrics:
 
 - Mel-cepstral distortion (MCD)
+- Voiced / unvoiced error rate (VUV_E)
+- Logarithmic rooted mean square error of the fundamental frequency ([1](http://latex.codecogs.com/svg.latex?\F_{0})RMSE). 
 
 For MCD, we apply dynamic time-warping (DTW) to match the length difference between ground-truth singing and generated singing.
 
