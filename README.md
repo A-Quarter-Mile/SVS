@@ -238,7 +238,7 @@ We provide three objective evaluation metrics:
 
 - Mel-cepstral distortion (MCD)
 - Voiced / unvoiced error rate (VUV_E)
-- Logarithmic rooted mean square error of the fundamental frequency ([1](http://latex.codecogs.com/svg.latex?\F_{0})RMSE). 
+- Logarithmic rooted mean square error of the fundamental frequency (![1](http://latex.codecogs.com/svg.latex?\F_{0}RMSE)RMSE). 
 
 For MCD, we apply dynamic time-warping (DTW) to match the length difference between ground-truth singing and generated singing.
 
