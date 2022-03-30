@@ -7,14 +7,14 @@ This is a template of SVS recipe for Muskits.
 * [Muskits SVS Recipe TEMPLATE](#muskits-svs-recipe-template)
   * [Table of Contents](#table-of-contents)
   * [Recipe flow](#recipe-flow)
-    * [1\. Data preparation](#1-data-preparation)
-    * [2\. Wav dump / Feature extract & Embedding preparation](#2-wav-dump--feature-extract--embedding-preparation)
-    * [3\. Removal of long / short data](#3-removal-of-long--short-data)
+    * [1\. Database-dependent data preparation](#1-database\-dependent-data-preparation)
+    * [2\. Standard audio and midi formatting](#2-standard-audio-and-midi-formatting)
+    * [3\. Filtering](#3-filtering)
     * [4\. Token list generation](#4-token-list-generation)
-    * [5\. SVS statistics collection](#5-svs-statistics-collection)
-    * [6\. SVS training](#6-svs-training)
-    * [7\. SVS decoding](#7-svs-decoding)
-    * [8\. Pack results](#8-pack-results)
+    * [5\. Statistics collection](#5-statistics-collection)
+    * [6\. Model training](#6-model-training)
+    * [7\. Model inference](#7-model-inference)
+    * [8\. Model packing](#8-model-packing)
   * [How to run](#how-to-run)
     * [Multi speaker model with speaker ID embedding training](#multi-speaker-model-with-speaker-id-embedding-training)
     * [Multi language model with language ID embedding training](#multi-language-model-with-language-id-embedding-training)
@@ -30,13 +30,13 @@ This is a template of SVS recipe for Muskits.
 
 SVS recipe consists of 9 stages.
 
-### 1. Data preparation
+### 1. Database-dependent data preparation
 
-Data preparation stage.
-It calls `local/data.sh` to creates Kaldi-style data directories in `data/` for training, validation, and evaluation sets.
+Data preparation stage starts here.
+It calls `local/data.sh` to creates Kaldi-style data directories but with additional `midi.scp` and `label` in `data/` for training, validation, and evaluation sets.
 
 See also:
-- [About Kaldi style data directory](#about-kaldi-style-data-directory)
+- [About data directory](#about-data-directory)
 
 ### 2. Wav dump / Feature extract & Embedding preparation
 
@@ -253,7 +253,7 @@ Therefore, we recommend performing the subjective evaluation if you want to chec
 
 You can refer [this page](https://github.com/kan-bayashi/webMUSHRA/blob/master/HOW_TO_SETUP.md) to launch web-based subjective evaluation system with [webMUSHRA](https://github.com/audiolabs/webMUSHRA).
 
-## About Kaldi style data directory
+## About data directory
 
 Each directory of training set, development set, and evaluation set, has same directory structure. See also http://kaldi-asr.org/doc/data_prep.html about Kaldi data structure. 
 We recommend you running `ofuton_p_utagoe_db` recipe and checking the contents of `data/` by yourself.
@@ -266,24 +266,24 @@ cd egs/ofuton_p_utagoe_db/svs1
 - Directory structure
     ```
     data/
-      tr_no_dev/     # Training set directory
-        - text       # The transcription
-        - label      # Specifying start and end time of the transcription 
-        - midi.scp   # MIDI file path
-        - wav.scp    # Wave file path
-        - utt2spk    # A file mapping utterance-id to speaker-id
-        - spk2utt    # A file mapping speaker-id to utterance-id
-        - segments   # [Option] Specifying start and end time of each utterance
-        - (utt2lang) # A file mapping utterance-id to language type (only for multilingual)
-      dev/
-        ...
-      test/
-        ...
-      token_list/   # token list directory
+    ├── tr_no_dev/     # Training set directory
+    │   ├── text       # The transcription
+    │   ├── label      # Specifying start and end time of the transcription 
+    │   ├── midi.scp   # MIDI file path
+    │   ├── wav.scp    # Wave file path
+    │   ├── utt2spk    # A file mapping utterance-id to speaker-id
+    │   ├── spk2utt    # A file mapping speaker-id to utterance-id
+    │   ├── segments   # [Option] Specifying start and end time of each utterance
+    │   └── (utt2lang) # A file mapping utterance-id to language type (only for multilingual)
+    ├── dev/
+    │   ...
+    ├── test/
+    │   ...
+    └── token_list/   # token list directory
         ...
     ```
 
-- `text` format
+ - `text` format
     ```
     uttidA <transcription>
     uttidB <transcription>
@@ -303,6 +303,8 @@ cd egs/ofuton_p_utagoe_db/svs1
     uttidB /path/to/uttidB.mid
     ...
     ```
+    
+    Note that for databases without explicit midi or MusicXML, we also provide rule-based automatic music transcription to extract related music information. Relevant functions can be found in KiSing recipe [here](https://github.com/SJTMusicTeam/Muskits/blob/main/egs/kising/svs1/local/data.sh).
     
 - `wav.scp` format
     ```
